@@ -22,6 +22,16 @@ class User(AbstractUser):
     phone = models.CharField(max_length=15)
     city = models.CharField(max_length=50)
     avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='custom_user_set',
+        blank=True
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='custom_user_set',
+        blank=True
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
