@@ -6,6 +6,8 @@ from .views import (
     LessonRetrieveUpdateDestroyAPIView,
 )
 
+app_name = 'materials'
+
 router = DefaultRouter()
 router.register(r"courses", CourseViewSet)
 
