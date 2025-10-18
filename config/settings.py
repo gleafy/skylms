@@ -42,10 +42,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "drf_yasg",
     "users",
     "materials",
     "rest_framework_simplejwt",
 ]
+
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 
 AUTH_USER_MODEL = "users.User"
 
