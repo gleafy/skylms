@@ -50,3 +50,8 @@ class Payment(models.Model):
     lesson = models.ForeignKey("materials.Lesson", on_delete=models.SET_NULL, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHODS)
+    stripe_product_id = models.CharField(max_length=100, blank=True, null=True)
+    stripe_price_id = models.CharField(max_length=100, blank=True, null=True)
+    stripe_session_id = models.CharField(max_length=100, blank=True, null=True)
+    payment_url = models.URLField(max_length=500, blank=True, null=True)
+    status = models.CharField(max_length=20, default="pending")
