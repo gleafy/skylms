@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "users",
     "materials",
     "rest_framework_simplejwt",
+    "django_celery_beat",
 ]
 
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
@@ -153,3 +154,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+CELERY_BEAT_SCHEDULE = {
+    'check-inactive-users': {
+        'task': 'users.tasks.check_inactive_users',
+        'schedule': 86400.0,
+    },
+}
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
