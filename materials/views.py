@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from .tasks import send_course_update_notification
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsModerator, IsOwner
@@ -27,6 +29,10 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+    
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        send_course_update_notification.delay(instance.id)
 
 class LessonListCreateAPIView(generics.ListCreateAPIView):
     queryset = Lesson.objects.all()
