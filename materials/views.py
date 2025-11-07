@@ -12,6 +12,8 @@ class CourseViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Course.objects.none()
         if self.request.user.groups.filter(name='moderators').exists():
             return Course.objects.all()
         return Course.objects.filter(owner=self.request.user)
@@ -58,6 +60,8 @@ class LessonRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsModerator | IsOwner]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Lesson.objects.none()
         if self.request.user.groups.filter(name='moderators').exists():
             return Lesson.objects.all()
         return Lesson.objects.filter(owner=self.request.user)
