@@ -40,10 +40,10 @@ jobs:
     - name: Run migrations
       env:
         DEBUG: False
-        SECRET_KEY: test-secret-key
-        POSTGRES_DB: lms_test
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
+        SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+        POSTGRES_DB: ${{ secrets.TEST_POSTGRES_DB }}
+        POSTGRES_USER: ${{ secrets.TEST_POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.TEST_POSTGRES_PASSWORD }}
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
       run: |
@@ -52,10 +52,10 @@ jobs:
     - name: Run tests
       env:
         DEBUG: False
-        SECRET_KEY: test-secret-key
-        POSTGRES_DB: lms_test
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
+        SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+        POSTGRES_DB: ${{ secrets.TEST_POSTGRES_DB }}
+        POSTGRES_USER: ${{ secrets.TEST_POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.TEST_POSTGRES_PASSWORD }}
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
       run: |
