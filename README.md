@@ -5,43 +5,48 @@
 ## Запуск через Docker Compose
 
 ### 1. Настройка окружения
-```bash
-# Скопируйте файл с переменными окружения
-cp .env.example .env
 
-# Отредактируйте .env файл при необходимости
+Скопируйте файл с переменными окружения:
+```bash
+cp .env.example .env
+```
+
+Отредактируйте .env файл:
+```bash
 vim .env
 ```
 
 ### 2. Запуск проекта
-```bash
-# Запуск всех сервисов
-docker-compose up -d
 
-# Просмотр логов
+Запуск всех сервисов:
+```bash
+docker-compose up -d
+```
+
+Просмотр логов:
+```bash
 docker-compose logs -f
 ```
 
 ### 3. Инициализация базы данных
 
-Выполнение миграций
+Выполнение миграций:
 ```bash
 docker-compose exec web python manage.py migrate
 ```
 
-Создание суперпользователя (опционально)
+Создание суперпользователя (опционально):
 ```bash
 docker-compose exec web python manage.py createsuperuser
 ```
 
 ### 4. Доступ к сервисам
 
-- **Админка**: http://localhost:8000/admin
-- **API**: http://localhost:8000/api/
-- **Swagger**: http://localhost:8000/swagger
-- **Redoc**: http://localhost:8000/redoc
-- **База данных**: localhost:5432
-- **Redis**: localhost:6379
+- **Приложение**: http://localhost
+- **Админка**: http://localhost/admin
+- **API**: http://localhost/api/
+- **База данных**: доступна только внутри Docker сети
+- **Redis**: доступен только внутри Docker сети
 
 ### 5. Остановка проекта
 ```bash
@@ -52,81 +57,25 @@ docker-compose down
 
 ### Предварительные требования
 
-1. Удаленный сервер на Linux
+1. Удаленный сервер на Linux с установленными Docker и Docker Compose
 2. Доступ по SSH с приватным ключом
-3. Установленные пакеты на сервере: python3.13, poetry redis, postgresql, gunicorn
 
 ### Настройка сервера
 
-1. Создайте директорию для проекта:
-   ```bash
-   sudo mkdir -p /opt/lms
-   sudo chown $USER:$USER /opt/lms
-   ```
+1. Установите Docker и Docker Compose:
 
-2. Создать .env по примеру (.env.example) и заполнить переменные своими значениями.
+2. Создайте директорию для проекта:
+```bash
+sudo mkdir -p /opt/lms
+sudo chown $USER:$USER /opt/lms
+```
 
-3. Настройте PostgreSQL:
-   ```bash
-   sudo -u postgres psql
-   CREATE DATABASE lms;
-   CREATE USER lms_user WITH PASSWORD 'your_password';
-   GRANT ALL PRIVILEGES ON DATABASE lms TO lms_user;
-   \q
-   ```
-
-4. Настройте Gunicorn (создайте `/etc/systemd/system/gunicorn.service`):
-   ```
-   [Unit]
-   Description=gunicorn daemon for LMS
-   After=network.target
-
-   [Service]
-   WorkingDirectory=/opt/lms
-   ExecStart=/usr/local/bin/poetry run gunicorn --bind unix:/opt/lms/lms.sock config.wsgi:application
-   ExecReload=/bin/kill -s HUP $MAINPID
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-5. Настройте Celery (создайте `/etc/systemd/system/celery_worker.service` и `/etc/systemd/system/celery_beat.service`) 
-   ```
-   [Unit]
-   Description=Celery Worker for LMS
-   After=network.target redis.target
-   
-   [Service]
-   Type=simple
-   WorkingDirectory=/opt/lms
-   ExecStart=/usr/local/bin/poetry run celery -A config worker --loglevel=info
-   
-   [Install]
-   WantedBy=multi-user.target
-   ```
-   ```
-   [Unit]
-   Description=Celery Beat for LMS
-   After=network.target redis.target     
-   [Service]
-   Type=simple
-   WorkingDirectory=/opt/lms
-   ExecStart=/usr/local/bin/poetry run celery -A config beat --loglevel=info     
-   [Install]
-   WantedBy=multi-user.target
-   ```
-6. Настройте Nginx (создайте `/etc/nginx/sites-available/lms`):
-   ```
-   server {
-       listen 80;
-       server_name your_server_ip;
-
-       location / {
-           include proxy_params;
-           proxy_pass http://unix:/opt/lms/lms.sock;
-       }
-   }
-   ```
+Создайте .env файл в директории проекта:
+```bash
+cd /opt/lms
+cp .env.example .env
+# Отредактируйте .env файл своими значениями
+```
 
 ### Настройка GitHub Secrets
 
@@ -134,18 +83,49 @@ docker-compose down
 
 - `SSH_KEY` - приватный SSH ключ для доступа к серверу
 - `SERVER_IP` - IP адрес вашего сервера
+- `SERVER_IP6` - IPv6 адрес сервера (для маскировки в логах)
 - `SSH_USER` - пользователь для SSH
 - `DEPLOY_DIR` - `/opt/lms`
+- `TEST_POSTGRES_DB` - имя тестовой БД
+- `TEST_POSTGRES_USER` - пользователь тестовой БД  
+- `TEST_POSTGRES_PASSWORD` - пароль тестовой БД
+- `TEST_SECRET_KEY` - секретный ключ для тестов
 
 ### Workflow процесс
 
 При каждом push в репозиторий автоматически:
 
 1. **Запускаются тесты** Django приложения
-2. **При успешном прохождении тестов** происходит деплой на сервер
-3. **Этапы деплоя:**
-   - Копирование файлов проекта
-   - Установка зависимостей через Poetry
-   - Сбор статических файлов
+2. **Собираются Docker образы** и проверяется их работоспособность
+3. **При успешном прохождении тестов** происходит деплой на сервер
+4. **Этапы деплоя:**
+   - Копирование файлов проекта на сервер
+   - Остановка текущих контейнеров
+   - Запуск обновленных контейнеров
    - Применение миграций базы данных
-   - Перезапуск сервисов    
+   - Сбор статических файлов
+
+## Структура проекта
+
+```
+.
+├── config/                 # Настройки Django
+├── materials/              # Приложение материалов курса
+├── users/                  # Приложение пользователей
+├── nginx/                  # Конфигурация Nginx
+├── docker-compose.yaml     # Docker Compose конфигурация
+├── Dockerfile              # Образ для Django приложения
+├── .github/workflows/      # CI/CD конфигурация
+└── README.md              # Документация
+```
+
+## Технологии
+
+- **Backend**: Django, Django REST Framework
+- **База данных**: PostgreSQL
+- **Кеширование и брокер**: Redis
+- **Асинхронные задачи**: Celery + Celery Beat
+- **Контейнеризация**: Docker + Docker Compose
+- **CI/CD**: GitHub Actions
+- **Веб-сервер**: Nginx
+- **WSGI сервер**: Gunicorn
